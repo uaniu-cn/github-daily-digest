@@ -55,6 +55,9 @@ README片段:
         },
         timeout=60,
     )
+    if resp.status_code != 200:
+        # 打印详细错误体，方便定位问题（不会泄露API Key）
+        print(f"API错误详情 [{resp.status_code}]: {resp.text[:500]}")
     resp.raise_for_status()
     data = resp.json()
 
