@@ -27,7 +27,9 @@ def build_html(items: list) -> str:
                         难度 {score_display}
                     </span>
                 </div>
-                <div style="color:#444; font-size:14px; margin-bottom:8px;">{it.get('description', '')}</div>
+                <div style="background:#f6f8fa; border-left:3px solid #0969da; padding:8px 10px; margin-bottom:8px; font-size:14px; color:#1a1a1a; font-weight:500;">
+                    {it.get('summary') or it.get('description', '(暂无简介)')}
+                </div>
                 <div style="color:#666; font-size:13px; margin-bottom:4px;">
                     语言: {it.get('language', '-')} | 总Star: {it.get('total_stars', '-')} | 今日新增: {it.get('today_stars', '-')}
                 </div>
