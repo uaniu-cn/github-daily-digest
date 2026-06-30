@@ -1,12 +1,12 @@
 """
-调用 Claude API，对每个 GitHub 项目做"复刻难度"打分。
+调用 DeepSeek API（OpenAI兼容接口），对每个 GitHub 项目做"复刻难度"打分。
 """
 import json
 import os
 import requests
 
-ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
-MODEL = "claude-sonnet-4-6"
+DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
+MODEL = "deepseek-chat"
 
 SYSTEM_PROMPT = """你是一个资深全栈工程师，负责评估开源项目"复刻难度"。
 给定项目的名称、语言、简介、README片段，请输出一个JSON对象，格式严格如下，不要输出任何其他文字、不要使用markdown代码块：
@@ -27,7 +27,7 @@ SYSTEM_PROMPT = """你是一个资深全栈工程师，负责评估开源项目"
 
 
 def score_repo(repo: dict, readme: str = "") -> dict:
-    api_key = os.environ["ANTHROPIC_API_KEY"]
+    api_key = os.environ["DEEPSEEK_API_KEY"]
 
     user_content = f"""项目名: {repo['full_name']}
 链接: {repo['url']}
@@ -41,17 +41,19 @@ README片段:
 """
 
     resp = requests.post(
-        ANTHROPIC_API_URL,
+        DEEPSEEK_API_URL,
         headers={
-            "x-api-key": api_key,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
         },
         json={
             "model": MODEL,
             "max_tokens": 500,
-            "system": SYSTEM_PROMPT,
-            "messages": [{"role": "user", "content": user_content}],
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_content},
+            ],
+            "response_format": {"type": "json_object"},
         },
         timeout=60,
     )
@@ -61,9 +63,7 @@ README片段:
     resp.raise_for_status()
     data = resp.json()
 
-    text = "".join(
-        block.get("text", "") for block in data.get("content", []) if block.get("type") == "text"
-    ).strip()
+    text = data["choices"][0]["message"]["content"].strip()
 
     # 去除可能出现的代码块包裹
     text = text.replace("```json", "").replace("```", "").strip()
